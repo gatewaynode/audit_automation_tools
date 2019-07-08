@@ -1,0 +1,24 @@
+# IDE
+audit_automation_tools.kdev4
+audit_automation_tools.kdev4/*
+.kdev4
+.kdev4/*
+
+# Virtual Environment
+env
+env/*
+
+# Local files
+local_files
+local_files/*
+
+# Pyinstaller files
+build
+build/*
+dist
+dist/*
+
+# Yah
+__pycache__
+__pycache__/*
+pip_audit.spec
