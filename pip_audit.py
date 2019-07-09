@@ -22,6 +22,7 @@ def init():
 @click.command()
 @click.option("-p", "--package", "raw_input", help="The PyPI package to audit")
 @click.option("-v", "--verbose", "verbose", help="Show more information.", is_flag=True)
+@click.option("-d", "--debug", "debug", help="Internal data information.", is_flag=True)
 @click.option(
     "-j",
     "--json",
@@ -29,7 +30,7 @@ def init():
     help="Run scanners with JSON output.  Disables verbose.",
     is_flag=True,
 )
-def main(raw_input, verbose, output_json):
+def main(raw_input, verbose, debug, output_json):
     # Sanitize input (ref: https://www.python.org/dev/peps/pep-0008/#package-and-module-names)
     exclude = set(string.punctuation.replace("_", "").replace("-", "") + " ")
     input = "".join(character for character in raw_input if character not in exclude)
@@ -53,12 +54,21 @@ def main(raw_input, verbose, output_json):
         sys.exit(1)
 
     if output:
-        zipfilename = (
-            output.stdout.decode("utf-8")
-            .split("Saved ")[1]
-            .split("\n")[0]
-            .replace("./", "")
-        )
+        if verbose:
+            print("Unzipping the wheel.")
+        if debug:
+            pprint(output)
+        stdout = output.stdout.decode("utf-8")
+        if "Saved " in stdout: 
+            zipfilename = (
+                stdout
+                .split("Saved ")[1]
+                .split("\n")[0]
+                .replace("./", "")
+            )
+        else:
+            print("File already downloaded or pip transaction failed!")
+            sys.exit(1)
         if zipfilename.endswith(".whl"):
             if verbose and not output_json:
                 print(f"Unzipping downloaded wheel: {zipfilename}")
