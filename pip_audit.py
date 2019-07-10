@@ -10,6 +10,7 @@ import sys
 import subprocess
 import string
 import click
+import tarfile
 import zipfile
 import traceback
 import logging
@@ -22,6 +23,14 @@ def dateutil_quirk_handler(raw_dir_list):
         if file.startswith("python_dateutil") and not file.endswith(".whl"):
             scan_list.append(file)
     scan_list.append("dateutil")
+    return scan_list
+
+
+def pyyaml_quirk_handler(raw_dir_list):
+    scan_list = []
+    for file in raw_dir_list:
+        if file.startswith("PyYAML") and not file.endswith(".tar.gz"):
+            scan_list.append(file)
     return scan_list
 
 
@@ -64,42 +73,58 @@ def main(raw_input, verbose, debug, output_json):
     except Exception as e:
         logging.error(traceback.format_exc())
         sys.exit(1)
-
+    
+    # Handle the downloaded file
     if output:
-        if verbose:
-            print("Unzipping the wheel.")
         if debug:
             pprint(output)
         stdout = output.stdout.decode("utf-8")
         if "Saved " in stdout:
-            zipfilename = stdout.split("Saved ")[1].split("\n")[0].replace("./", "")
+            saved_file_name = stdout.split("Saved ")[1].split("\n")[0].replace("./", "")
         else:
             print("File already downloaded or pip transaction failed!")
             sys.exit(1)
-        if zipfilename.endswith(".whl"):
+        if saved_file_name.endswith(".whl"):
             if verbose and not output_json:
-                print(f"Unzipping downloaded wheel: {zipfilename}")
-            zip_ref = zipfile.ZipFile(zipfilename, "r")
+                print(f"Unzipping downloaded wheel: {saved_file_name}")
+            zip_ref = zipfile.ZipFile(saved_file_name, "r")
             try:
                 zip_ref.extractall("local_files/")
             except Exception as e:
                 logging.error(traceback.format_exc())
-
-            raw_dir_list = os.listdir("local_files")
-
-            """ Quirk handler.  This will change as this is not scalable 
-                Note: requests ignores "--no-deps"
-            """
-            if input == "python-dateutil":
-                scan_list = dateutil_quirk_handler(raw_dir_list)
-            else:
-                for file in raw_dir_list:
-                    if file.startswith(input) and not file.endswith(".whl"):
-                        scan_list.append(file)
+                zip_ref.close()
+                sys.exit(1)
+            zip_ref.close()
+        elif saved_file_name.endswith(".tar.gz"):
+            if verbose and not output_json:
+                print(f"Extracting tarball: {saved_file_name}")
+            tar_ref = tarfile.open(saved_file_name, "r")
+            try:
+                tar_ref.extractall("local_files/")
+            except Exception as e:
+                logging.error(traceback.format_exc())
+                tar_ref.close()
+                sys.exit(1)
+            tar_ref.close()
         else:
             if verbose and not output_json:
-                print("No wheel found.  Can't handle anything else yet. Exiting.")
+                print(f"{saved_file_name} found. Not a wheel or tarball, can't handle anything else yet. Exiting.")
             sys.exit(1)
+        
+        # Create scanning list
+        raw_dir_list = os.listdir("local_files")
+
+        """ Quirk handler.  This will change as this is not scalable 
+            Note: requests ignores "--no-deps"
+        """
+        if input == "python-dateutil":
+            scan_list = dateutil_quirk_handler(raw_dir_list)
+        elif input == "pyyaml":
+            scan_list = pyyaml_quirk_handler(raw_dir_list)
+        else:
+            for file in raw_dir_list:
+                if file.startswith(input) and not file.endswith(".whl"):
+                    scan_list.append(file)
 
         if verbose and not output_json:
             print(f"Running bandit against package dirs {', '.join(scan_list)}")
