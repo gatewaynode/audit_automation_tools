@@ -88,6 +88,10 @@ def main(raw_input, verbose, debug, output_json):
             if verbose and not output_json:
                 print(f"Unzipping downloaded wheel: {saved_file_name}")
             zip_ref = zipfile.ZipFile(saved_file_name, "r")
+            parsed_raw_dir_list = list(file for file in zip_ref.namelist() if file.endswith(".py"))
+            # @TODO
+            pprint(parsed_raw_dir_list)
+            exit(0)
             try:
                 zip_ref.extractall("local_files/")
             except Exception as e:
@@ -99,6 +103,10 @@ def main(raw_input, verbose, debug, output_json):
             if verbose and not output_json:
                 print(f"Extracting tarball: {saved_file_name}")
             tar_ref = tarfile.open(saved_file_name, "r")
+            #@TODO need to add tarfile.list to get the file list instead of handling quirks
+            parsed_raw_dir_list = list(file for file in tar_ref.getnames() if file.endswith(".py"))
+            pprint(parsed_raw_dir_list)
+            exit(0)
             try:
                 tar_ref.extractall("local_files/")
             except Exception as e:
