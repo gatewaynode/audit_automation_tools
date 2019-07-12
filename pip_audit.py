@@ -41,6 +41,7 @@ def init():
 
 @click.command()
 @click.option("-p", "--package", "raw_input", help="The PyPI package to audit")
+@click.option("-o", "--output", "output", help="The directory to unarchive into.")
 @click.option("-v", "--verbose", "verbose", help="Show more information.", is_flag=True)
 @click.option("-d", "--debug", "debug", help="Internal data information.", is_flag=True)
 @click.option(
@@ -50,7 +51,7 @@ def init():
     help="Run scanners with JSON output.  Disables verbose.",
     is_flag=True,
 )
-def main(raw_input, verbose, debug, output_json):
+def main(raw_input, output, verbose, debug, output_json):
     scan_list = []
     # Sanitize input (ref: https://www.python.org/dev/peps/pep-0008/#package-and-module-names)
     exclude = set(string.punctuation.replace("_", "").replace("-", "") + " ")
@@ -103,10 +104,10 @@ def main(raw_input, verbose, debug, output_json):
             if verbose and not output_json:
                 print(f"Extracting tarball: {saved_file_name}")
             tar_ref = tarfile.open(saved_file_name, "r")
-            #@TODO need to add tarfile.list to get the file list instead of handling quirks
             parsed_raw_dir_list = list(file for file in tar_ref.getnames() if file.endswith(".py"))
             pprint(parsed_raw_dir_list)
             exit(0)
+            # @TODO
             try:
                 tar_ref.extractall("local_files/")
             except Exception as e:
