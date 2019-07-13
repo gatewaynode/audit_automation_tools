@@ -17,23 +17,6 @@ import logging
 from pprint import pprint
 
 
-def dateutil_quirk_handler(raw_dir_list):
-    scan_list = []
-    for file in raw_dir_list:
-        if file.startswith("python_dateutil") and not file.endswith(".whl"):
-            scan_list.append(file)
-    scan_list.append("dateutil")
-    return scan_list
-
-
-def pyyaml_quirk_handler(raw_dir_list):
-    scan_list = []
-    for file in raw_dir_list:
-        if file.startswith("PyYAML") and not file.endswith(".tar.gz"):
-            scan_list.append(file)
-    return scan_list
-
-
 def init():
     if not os.path.isdir("local_files"):
         os.makedirs("local_files")
@@ -41,6 +24,7 @@ def init():
 
 @click.command()
 @click.option("-p", "--package", "raw_input", help="The PyPI package to audit")
+@click.option("-o", "--output", "output_dir", help="The directory to unarchive into.", default="local_files")
 @click.option("-v", "--verbose", "verbose", help="Show more information.", is_flag=True)
 @click.option("-d", "--debug", "debug", help="Internal data information.", is_flag=True)
 @click.option(
@@ -50,8 +34,9 @@ def init():
     help="Run scanners with JSON output.  Disables verbose.",
     is_flag=True,
 )
-def main(raw_input, verbose, debug, output_json):
+def main(raw_input, output_dir, verbose, debug, output_json):
     scan_list = []
+    package_meta = {}
     # Sanitize input (ref: https://www.python.org/dev/peps/pep-0008/#package-and-module-names)
     exclude = set(string.punctuation.replace("_", "").replace("-", "") + " ")
     input = "".join(character for character in raw_input if character not in exclude)
@@ -62,7 +47,7 @@ def main(raw_input, verbose, debug, output_json):
         "--no-binary",
         "--no-deps",
         "--dest",
-        "local_files",
+        output_dir,
         input,
     ]
 
@@ -78,6 +63,7 @@ def main(raw_input, verbose, debug, output_json):
     if output:
         if debug:
             pprint(output)
+        parsed_raw_dir_list = []
         stdout = output.stdout.decode("utf-8")
         if "Saved " in stdout:
             saved_file_name = stdout.split("Saved ")[1].split("\n")[0].replace("./", "")
@@ -88,8 +74,11 @@ def main(raw_input, verbose, debug, output_json):
             if verbose and not output_json:
                 print(f"Unzipping downloaded wheel: {saved_file_name}")
             zip_ref = zipfile.ZipFile(saved_file_name, "r")
+            package_meta["total_package_files"] = len(zip_ref.namelist())
+            parsed_raw_dir_list = list(file for file in zip_ref.namelist() if file.endswith(".py"))
+            
             try:
-                zip_ref.extractall("local_files/")
+                zip_ref.extractall(f"{output_dir}/")
             except Exception as e:
                 logging.error(traceback.format_exc())
                 zip_ref.close()
@@ -99,8 +88,11 @@ def main(raw_input, verbose, debug, output_json):
             if verbose and not output_json:
                 print(f"Extracting tarball: {saved_file_name}")
             tar_ref = tarfile.open(saved_file_name, "r")
+            package_meta["total_package_files"] = len(tar_ref.getnames())
+            parsed_raw_dir_list = list(file for file in tar_ref.getnames() if file.endswith(".py"))
+
             try:
-                tar_ref.extractall("local_files/")
+                tar_ref.extractall(f"{output_dir}/")
             except Exception as e:
                 logging.error(traceback.format_exc())
                 tar_ref.close()
@@ -111,20 +103,15 @@ def main(raw_input, verbose, debug, output_json):
                 print(f"{saved_file_name} found. Not a wheel or tarball, can't handle anything else yet. Exiting.")
             sys.exit(1)
         
-        # Create scanning list
-        raw_dir_list = os.listdir("local_files")
-
-        """ Quirk handler.  This will change as this is not scalable 
-            Note: requests ignores "--no-deps"
-        """
-        if input == "python-dateutil":
-            scan_list = dateutil_quirk_handler(raw_dir_list)
-        elif input == "pyyaml":
-            scan_list = pyyaml_quirk_handler(raw_dir_list)
+        if parsed_raw_dir_list:
+            package_meta["total_python_files"] = len(parsed_raw_dir_list)
+            scan_list = list(set(dir.split("/")[0] for dir in parsed_raw_dir_list))
+            if debug:
+                pprint(scan_list)
         else:
-            for file in raw_dir_list:
-                if file.startswith(input) and not file.endswith(".whl"):
-                    scan_list.append(file)
+            if verbose and not output_json:
+                print("No python files found in package.  Exiting")
+            sys.exit(1)
 
         if verbose and not output_json:
             print(f"Running bandit against package dirs {', '.join(scan_list)}")
@@ -137,8 +124,8 @@ def main(raw_input, verbose, debug, output_json):
                     "-f",
                     "json",
                     "-o",
-                    f"local_files/bandit_scan_{target}.json",
-                    f"local_files/{target}",
+                    f"{output_dir}/bandit_scan_{target}.json",
+                    f"{output_dir}/{target}",
                 ]
             else:
                 bandit_scan = [
@@ -148,8 +135,8 @@ def main(raw_input, verbose, debug, output_json):
                     "-f",
                     "txt",
                     "-o",
-                    f"local_files/bandit_scan_{target}.txt",
-                    f"local_files/{target}",
+                    f"{output_dir}/bandit_scan_{target}.txt",
+                    f"{output_dir}/{target}",
                 ]
             try:
                 subprocess.run(bandit_scan)
@@ -163,20 +150,23 @@ def main(raw_input, verbose, debug, output_json):
                 "detect-secrets",
                 "scan",
                 "--all-files",
-                f"local_files/{target}",
+                f"{output_dir}/{target}",
             ]
             try:
-                output = subprocess.run(detect_secrets_scan, capture_output=True)
+                detect_secrets_output = subprocess.run(detect_secrets_scan, capture_output=True)
             except Exception as e:
                 logging.error(traceback.format_exc())
+            if debug:
+                print("Trying to write to:")
+                pprint(f"{output_dir}/detect_secrets_{target}.json")
             try:
-                file = open(f"local_files/detect_secrets_{target}.json", "w")
-                file.write(output.stdout.decode("utf-8"))
+                file = open(f"{output_dir}/detect_secrets_{target}.json", "w")
+                file.write(detect_secrets_output.stdout.decode("utf-8"))
                 file.close()
             except Exception as e:
                 logging.error(traceback.format_exc())
 
 
 if __name__ == "__main__":
-    init()
+    init() # @TODO move this to inside main, assume this is not usually needed
     main()
