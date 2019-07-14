@@ -250,27 +250,27 @@ def main(package_name, output_dir, verbose, debug, output_json, input_list):
         if debug:
             pprint(output)
         if output:
-            parsed_raw_dir_list, package_meta = _extract_archives(
+            scan_list, package_meta = _extract_archives(
                 output=output, output_dir=output_dir, package_meta=package_meta, verbose=verbose, debug=debug, output_json=output_json
             )
 
-            if parsed_raw_dir_list and package_meta:
+            if scan_list and package_meta:
                 if verbose and not output_json:
                     print(
-                        f"-> Running bandit against package dirs {', '.join(scan_list)}"
+                        f"-> Running bandit against files {', '.join(scan_list)}. Output saved to {output_dir}."
                     )
                 if debug:
-                    pprint(parsed_raw_dir_list)
+                    pprint(scan_list)
                 bandit_scan_results = _bandit_scan(
                     scan_list=scan_list, output_dir=output_dir, output_json=output_json
                 )
 
                 if verbose and not output_json:
                     print(
-                        f"Running detect-secrets against package dirs {', '.join(scan_list)}"
+                        f"Running detect-secrets against package dirs {', '.join(scan_list)}.  Output saved to {output_dir}."
                     )
                 if debug:
-                    pprint(parsed_raw_dir_list)
+                    pprint(scan_list)
                 detect_secrets_scan_results = _detect_secrets_scan(
                     scan_list=scan_list, output_dir=output_dir, output_json=output_json
                 )
