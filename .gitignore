@@ -3,6 +3,7 @@ audit_automation_tools.kdev4
 audit_automation_tools.kdev4/*
 .kdev4
 .kdev4/*
+*.kate-swp
 
 # Virtual Environment
 env

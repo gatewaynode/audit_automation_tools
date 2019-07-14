@@ -8,3 +8,8 @@ def virtualenv():
     run("echo")
     run("echo 'VirtualENV Setup Complete.  Now run: source env/bin/activate'")
     run("echo")
+
+
+@task
+def clean():
+    run("rm -rvf local_files/*")
