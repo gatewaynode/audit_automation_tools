@@ -12,6 +12,4 @@ def virtualenv():
 
 @task
 def clean():
-    run("mv -v local_files/simple_list.json ../")
     run("rm -rvf local_files/*")
-    run("mv -v simple_list.json local_files/")

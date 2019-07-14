@@ -246,34 +246,47 @@ def main(package_name, output_dir, verbose, debug, output_json, input_list):
         )
 
         if verbose and not output_json:
-            print("-> Extracting archives and scan list")
+            print("-> Extracting archives and meta")
         if debug:
             pprint(output)
         if output:
-            scan_list, package_meta = _extract_archives(
+            parsed_raw_dir_list, package_meta = _extract_archives(
                 output=output, output_dir=output_dir, package_meta=package_meta, verbose=verbose, debug=debug, output_json=output_json
             )
-
-            if scan_list and package_meta:
-                if verbose and not output_json:
-                    print(
-                        f"-> Running bandit against files {', '.join(scan_list)}. Output saved to {output_dir}."
+            
+            if verbose and not output_json:
+                print("-> Parsing out the scan list")
+            if debug:
+                pprint(parsed_raw_dir_list)
+            if parsed_raw_dir_list:
+                scan_list, package_meta = _retrieve_directories_to_scan(
+                    parsed_raw_dir_list=parsed_raw_dir_list, 
+                    package_meta=package_meta, 
+                    verbose=verbose, 
+                    debug=debug, 
+                    output_json=output_json
                     )
-                if debug:
-                    pprint(scan_list)
-                bandit_scan_results = _bandit_scan(
-                    scan_list=scan_list, output_dir=output_dir, output_json=output_json
-                )
 
-                if verbose and not output_json:
-                    print(
-                        f"Running detect-secrets against package dirs {', '.join(scan_list)}.  Output saved to {output_dir}."
+                if scan_list and package_meta:
+                    if verbose and not output_json:
+                        print(
+                            f"-> Running bandit against files {', '.join(scan_list)}. Output saved to {output_dir}."
+                        )
+                    if debug:
+                        pprint(scan_list)
+                    bandit_scan_results = _bandit_scan(
+                        scan_list=scan_list, output_dir=output_dir, output_json=output_json
                     )
-                if debug:
-                    pprint(scan_list)
-                detect_secrets_scan_results = _detect_secrets_scan(
-                    scan_list=scan_list, output_dir=output_dir, output_json=output_json
-                )
+
+                    if verbose and not output_json:
+                        print(
+                            f"Running detect-secrets against package dirs {', '.join(scan_list)}.  Output saved to {output_dir}."
+                        )
+                    if debug:
+                        pprint(scan_list)
+                    detect_secrets_scan_results = _detect_secrets_scan(
+                        scan_list=scan_list, output_dir=output_dir, output_json=output_json
+                    )
 
 
 if __name__ == "__main__":
