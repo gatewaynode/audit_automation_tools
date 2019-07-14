@@ -66,7 +66,7 @@ def _extract_archives(
         saved_file_name = stdout.split("Saved ")[1].split("\n")[0].replace("./", "")
     else:
         print("File already downloaded or pip transaction failed!")
-        return False
+        return (False, package_meta)
     if saved_file_name.endswith(".whl"):
         if verbose and not output_json:
             print(f"Unzipping downloaded wheel: {saved_file_name}")
@@ -232,6 +232,7 @@ def main(package_name, output_dir, verbose, debug, output_json, input_list):
     for raw_input in targets:
         scan_list = []
         package_meta = {}
+        scan_errors = 0
 
         if verbose and not output_json:
             print(f"-> Using pip to download {raw_input}")
@@ -244,7 +245,7 @@ def main(package_name, output_dir, verbose, debug, output_json, input_list):
             debug=debug,
             output_json=output_json,
         )
-
+        
         if verbose and not output_json:
             print("-> Extracting archives and meta")
         if debug:
@@ -270,7 +271,7 @@ def main(package_name, output_dir, verbose, debug, output_json, input_list):
                 if scan_list and package_meta:
                     if verbose and not output_json:
                         print(
-                            f"-> Running bandit against files {', '.join(scan_list)}. Output saved to {output_dir}."
+                            f"--> Running bandit against files {', '.join(scan_list)}. Output saved to {output_dir}."
                         )
                     if debug:
                         pprint(scan_list)
@@ -280,13 +281,17 @@ def main(package_name, output_dir, verbose, debug, output_json, input_list):
 
                     if verbose and not output_json:
                         print(
-                            f"Running detect-secrets against package dirs {', '.join(scan_list)}.  Output saved to {output_dir}."
+                            f"--> Running detect-secrets against package dirs {', '.join(scan_list)}.  Output saved to {output_dir}."
                         )
                     if debug:
                         pprint(scan_list)
                     detect_secrets_scan_results = _detect_secrets_scan(
                         scan_list=scan_list, output_dir=output_dir, output_json=output_json
                     )
+        else:
+            if verbose and not output_json:
+                print(f"! Pip download failed for {raw_input}")
+            scan_errors += 1
 
 
 if __name__ == "__main__":
