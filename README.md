@@ -15,10 +15,20 @@ Built and "tested" on Linux, KDE Neon latest stable
 Usage
 -----
 
+Audit a single package:
 ```bash
 ./pip_audit.py -v -p urllib3
 ```
-Literally this is the only package I've tested it with.  Undoubtedly there will be some packages that will break it.
+
+Audit a JSON list of packages:
+```bash
+./pip_audit -v -i my_list.json
+```
+
+You can also download the entire list of PyPI packages with the invoke task:
+```bash
+invoke megaupdate
+```
 
 Input is handled with Click so there is some basic help as well.
 ```bash
@@ -27,7 +37,7 @@ Input is handled with Click so there is some basic help as well.
 
 Install
 -------
-Install Python Invoke and invoke the virtualenv build.
+Install Python Invoke and invoke the virtualenv build (you might need to install python-invoke first).
 ```bash
 invoke virtualenv
 source env/bin/activate

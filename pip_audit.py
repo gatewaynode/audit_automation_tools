@@ -245,28 +245,33 @@ def main(package_name, output_dir, verbose, debug, output_json, input_list):
             debug=debug,
             output_json=output_json,
         )
-        
+
         if verbose and not output_json:
             print("-> Extracting archives and meta")
         if debug:
             pprint(output)
         if output:
             parsed_raw_dir_list, package_meta = _extract_archives(
-                output=output, output_dir=output_dir, package_meta=package_meta, verbose=verbose, debug=debug, output_json=output_json
+                output=output,
+                output_dir=output_dir,
+                package_meta=package_meta,
+                verbose=verbose,
+                debug=debug,
+                output_json=output_json,
             )
-            
+
             if verbose and not output_json:
                 print("-> Parsing out the scan list")
             if debug:
                 pprint(parsed_raw_dir_list)
             if parsed_raw_dir_list:
                 scan_list, package_meta = _retrieve_directories_to_scan(
-                    parsed_raw_dir_list=parsed_raw_dir_list, 
-                    package_meta=package_meta, 
-                    verbose=verbose, 
-                    debug=debug, 
-                    output_json=output_json
-                    )
+                    parsed_raw_dir_list=parsed_raw_dir_list,
+                    package_meta=package_meta,
+                    verbose=verbose,
+                    debug=debug,
+                    output_json=output_json,
+                )
 
                 if scan_list and package_meta:
                     if verbose and not output_json:
@@ -276,7 +281,9 @@ def main(package_name, output_dir, verbose, debug, output_json, input_list):
                     if debug:
                         pprint(scan_list)
                     bandit_scan_results = _bandit_scan(
-                        scan_list=scan_list, output_dir=output_dir, output_json=output_json
+                        scan_list=scan_list,
+                        output_dir=output_dir,
+                        output_json=output_json,
                     )
 
                     if verbose and not output_json:
@@ -286,7 +293,9 @@ def main(package_name, output_dir, verbose, debug, output_json, input_list):
                     if debug:
                         pprint(scan_list)
                     detect_secrets_scan_results = _detect_secrets_scan(
-                        scan_list=scan_list, output_dir=output_dir, output_json=output_json
+                        scan_list=scan_list,
+                        output_dir=output_dir,
+                        output_json=output_json,
                     )
         else:
             if verbose and not output_json:

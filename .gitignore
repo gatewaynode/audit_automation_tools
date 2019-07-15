@@ -12,6 +12,7 @@ env/*
 # Local files
 local_files
 local_files/*
+mega_list.json
 
 # Pyinstaller files
 build
