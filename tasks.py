@@ -1,5 +1,7 @@
 from invoke import task
 from invoke import run
+import requests
+import json
 
 @task
 def virtualenv():
@@ -13,3 +15,14 @@ def virtualenv():
 @task
 def clean():
     run("rm -rvf local_files/*")
+    
+
+@task
+def megaupdate():
+    inventory_raw = requests.get("https://pypi.org/simple/")
+    inventory_list = inventory_raw.text.split("\n")[6:-2]
+    inventory = []
+    for line in inventory_list:
+        inventory.append(line.strip().split('">')[1].replace("</a>", ""))
+    print(len(inventory))
+    
