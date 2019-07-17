@@ -1,0 +1,15 @@
+[
+  "six",
+  "python-dateutil",
+  "pyyaml",
+  "pyasn1",
+  "jmespath",
+  "idna",
+  "rsa",
+  "setuptools",
+  "chardet",
+  "colorama",
+  "simplejson",
+  "pytz",
+  "markupsafe"
+]

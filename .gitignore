@@ -13,6 +13,7 @@ env/*
 local_files
 local_files/*
 mega_list.json
+top5000_list.json
 
 # Pyinstaller files
 build
