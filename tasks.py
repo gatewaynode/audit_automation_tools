@@ -32,7 +32,7 @@ def megaupdate():
     inventory_list = inventory_raw.text.split("\n")[6:-2]
     inventory = []
     for line in inventory_list:
-        inventory.append(line.strip().split(">")[1].replace("</a>", ""))
+        inventory.append(line.strip().split("\">")[1].replace("</a>", ""))
     with open("mega_list.json", "w", encoding="utf-8") as file:
         json.dump(inventory, file, ensure_ascii=False, indent=4)
         
