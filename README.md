@@ -1,6 +1,6 @@
 Audit Tools
 ===========
-Some simple tooling to help automate a security audit for pip and PyPI.  Right now this just contains a wrapper called pip_audit that uses pip to download a non-binary version of a package, crack open the wheel and run Bandit and Detect Secrets against it.  The resulting reports (along with the source and wheel) are stored in a local_files directory inside this codebase.
+Some simple tooling to help automate a security audit for pip and PyPI.  Right now this just contains a wrapper called pip_audit.py that uses pip to download a non-binary version of a package, crack open the wheel and run Bandit and Detect Secrets against it.  The resulting reports (along with the source and wheel) are stored in a local_files directory inside this codebase.
 
 This is very rudimentary, just barely hits MVP, has no tests and expects you to have some idea of how to install it.
 
@@ -30,6 +30,11 @@ You can also download the entire list of PyPI packages with the invoke task:
 invoke megaupdate
 ```
 
+Or download a more reasonably sized top 5000 list of PyPI packages:
+```bash
+invoke top5000
+```
+
 Input is handled with Click so there is some basic help as well.
 ```bash
 ./pip_audit.py --help
@@ -43,4 +48,4 @@ invoke virtualenv
 source env/bin/activate
 ```
 
-As always, please fork away, open issues and such.
+As always, please fork away, merge requests are welcome, open issues and such.  There is a discussion board at https://www.reddit.com/r/pipsecurity/
