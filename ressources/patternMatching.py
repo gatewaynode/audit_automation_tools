@@ -60,7 +60,9 @@ def stringMatching(toLookFor, textFilePathList, precompiledPath=None, verbose=Fa
                 3 * fileSize < 2 * availableRAM
             ):  # i.e. if we can fit the file in RAM without filling more than two-third of it (in order to keep some margin).
                 if verbose:
-                    print(f"Enough RAM to test the whole file {textFilePath} in one pass")
+                    print(
+                        f"Enough RAM to test the whole file {textFilePath} in one pass"
+                    )
                 for end_index, value in ahocorasick_automaton.iter(
                     textFile.read().lower()
                 ):  # string comparisons are case sensitive, so both the keywords and the selected text are cast to lowercase.
@@ -71,7 +73,9 @@ def stringMatching(toLookFor, textFilePathList, precompiledPath=None, verbose=Fa
                         print(textFilePath + " : " + value + " : " + str(start_index))
             else:
                 if verbose:
-                    print(f"Not enough RAM to test the whole file {textFilePath} in one pass")
+                    print(
+                        f"Not enough RAM to test the whole file {textFilePath} in one pass"
+                    )
                 # Here I will assume that each utf-8 character is encoded in 4 bits, which is a worst-case scenario (they should mostly be encoded on 1 bit).
                 pointerPosition = (
                     textFile.tell()
