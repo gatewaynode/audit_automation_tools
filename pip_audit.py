@@ -128,75 +128,6 @@ def _retrieve_directories_to_scan(
     return (scan_list, package_meta)
 
 
-# Moving to plugin based architecture 
-#def _bandit_scan(scan_list, output_dir, verbose=False, debug=False, output_json=False):
-    #scan_errors = 0
-    #for target in scan_list:
-        #if output_json:
-            #bandit_scan = [
-                #"bandit",
-                #"-r",
-                #"-q",
-                #"-f",
-                #"json",
-                #"-o",
-                #f"{output_dir}/bandit_scan_{target}.json",
-                #f"{output_dir}/{target}",
-            #]
-        #else:
-            #bandit_scan = [
-                #"bandit",
-                #"-r",
-                #"-q",
-                #"-f",
-                #"txt",
-                #"-o",
-                #f"{output_dir}/bandit_scan_{target}.txt",
-                #f"{output_dir}/{target}",
-            #]
-        #try:
-            #subprocess.run(bandit_scan)
-        #except Exception as e:
-            #logging.error(traceback.format_exc())
-            #scan_errors += 1
-
-    #return scan_errors
-
-
-# Moving to plugin based architecture
-#def _detect_secrets_scan(
-    #scan_list, output_dir, verbose=False, debug=False, output_json=False
-#):
-    #scan_errors = 0
-    #for target in scan_list:
-        #detect_secrets_scan = [
-            #"detect-secrets",
-            #"scan",
-            #"--all-files",
-            #f"{output_dir}/{target}",
-        #]
-        #try:
-            #detect_secrets_output = subprocess.run(
-                #detect_secrets_scan, capture_output=True
-            #)
-        #except Exception as e:
-            #logging.error(traceback.format_exc())
-            #scan_errors += 1
-
-        #if debug:
-            #print("Trying to write to:")
-            #pprint(f"{output_dir}/detect_secrets_{target}.json")
-        #try:
-            #file = open(f"{output_dir}/detect_secrets_{target}.json", "w")
-            #file.write(detect_secrets_output.stdout.decode("utf-8"))
-            #file.close()
-        #except Exception as e:
-            #logging.error(traceback.format_exc())
-            #scan_errors += 1
-
-    #return scan_errors
-
-
 @click.command()
 @click.option("-p", "--package", "package_name", help="The PyPI package to audit")
 @click.option(
@@ -295,30 +226,6 @@ def main(package_name, output_dir, verbose, debug, output_json, input_list):
                     scan_errors += sum(responses)
                     if debug:
                         pprint(responses)
-                    #if verbose and not output_json:
-                        #print(
-                            #f"-> Running bandit against files {', '.join(scan_list)}. Output saved to {output_dir}."
-                        #)
-                    #if debug:
-                        #pprint(scan_list)
-                    #bandit_scan_results = _bandit_scan(
-                        #scan_list=scan_list,
-                        #output_dir=output_dir,
-                        #output_json=output_json,
-                    #)
-
-                    #if verbose and not output_json:
-                        #print(
-                            #f"-> Running detect-secrets against package dirs {', '.join(scan_list)}.  Output saved to {output_dir}."
-                        #)
-                    #if debug:
-                        #pprint(scan_list)
-                    #detect_secrets_scan_results = _detect_secrets_scan(
-                        #scan_list=scan_list,
-                        #output_dir=output_dir,
-                        #output_json=output_json,
-                    #)
-                    
                     # @TODO add package cleanup routine
         else:
             if verbose and not output_json:
