@@ -14,6 +14,8 @@ class Bsndit_Scanner(IPlugin):
         ):
         scan_errors = 0
         if scan_list:
+            if verbose and not output_json:
+                print(f"-> Running bandit against files {', '.join(scan_list)}. Output saved to {output_dir}.")
             for target in scan_list:
                 if output_json:
                     bandit_scan = [

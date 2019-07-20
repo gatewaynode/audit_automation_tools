@@ -70,7 +70,7 @@ def _extract_archives(
         return (False, package_meta)
     if saved_file_name.endswith(".whl"):
         if verbose and not output_json:
-            print(f"--> Unzipping downloaded wheel: {saved_file_name}")
+            print(f"-> Unzipping downloaded wheel: {saved_file_name}")
         zip_ref = zipfile.ZipFile(saved_file_name, "r")
         package_meta["total_package_files"] = len(zip_ref.namelist())
         parsed_raw_dir_list = list(
@@ -89,7 +89,7 @@ def _extract_archives(
 
     elif saved_file_name.endswith(".tar.gz"):
         if verbose and not output_json:
-            print(f"--> Extracting tarball: {saved_file_name}")
+            print(f"-> Extracting tarball: {saved_file_name}")
         tar_ref = tarfile.open(saved_file_name, "r")
         package_meta["total_package_files"] = len(tar_ref.getnames())
         parsed_raw_dir_list = list(
@@ -230,6 +230,12 @@ def main(package_name, output_dir, verbose, debug, output_json, input_list):
         targets = _decode_json_file(input_list)
     # else:
     # targets = _pull_from_queue()
+    
+    if verbose and not output_json:
+        print("-> Loading scan plugins")
+    scan_plugins = PluginManager()
+    scan_plugins.setPluginPlaces(["plugins"])
+    scan_plugins.collectPlugins()
 
     # Fire!
     scan_errors = 0
@@ -277,12 +283,6 @@ def main(package_name, output_dir, verbose, debug, output_json, input_list):
                 )
 
                 if scan_list and package_meta:
-                    if verbose and not output_json:
-                        print("--> Loading scan plugins")
-                    scan_plugins = PluginManager()
-                    scan_plugins.setPluginPlaces(["plugins"])
-                    scan_plugins.collectPlugins()
-                    
                     responses = []
                     for plugin in scan_plugins.getAllPlugins():
                         responses.append(plugin.plugin_object.scan(
@@ -297,7 +297,7 @@ def main(package_name, output_dir, verbose, debug, output_json, input_list):
                         pprint(responses)
                     #if verbose and not output_json:
                         #print(
-                            #f"--> Running bandit against files {', '.join(scan_list)}. Output saved to {output_dir}."
+                            #f"-> Running bandit against files {', '.join(scan_list)}. Output saved to {output_dir}."
                         #)
                     #if debug:
                         #pprint(scan_list)
@@ -309,7 +309,7 @@ def main(package_name, output_dir, verbose, debug, output_json, input_list):
 
                     #if verbose and not output_json:
                         #print(
-                            #f"--> Running detect-secrets against package dirs {', '.join(scan_list)}.  Output saved to {output_dir}."
+                            #f"-> Running detect-secrets against package dirs {', '.join(scan_list)}.  Output saved to {output_dir}."
                         #)
                     #if debug:
                         #pprint(scan_list)
@@ -318,6 +318,8 @@ def main(package_name, output_dir, verbose, debug, output_json, input_list):
                         #output_dir=output_dir,
                         #output_json=output_json,
                     #)
+                    
+                    # @TODO add package cleanup routine
         else:
             if verbose and not output_json:
                 print(f"! Pip download failed for {raw_input}")
