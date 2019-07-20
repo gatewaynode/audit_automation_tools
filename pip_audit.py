@@ -161,7 +161,7 @@ def main(package_name, output_dir, verbose, debug, output_json, input_list):
         targets = _decode_json_file(input_list)
     # else:
     # targets = _pull_from_queue()
-    
+
     if verbose and not output_json:
         print("-> Loading scan plugins")
     scan_plugins = PluginManager()
@@ -173,7 +173,7 @@ def main(package_name, output_dir, verbose, debug, output_json, input_list):
     for raw_input in targets:
         scan_list = []
         package_meta = {}
-        
+
         if verbose and not output_json:
             print(f"-> Using pip to download {raw_input}")
         if debug:
@@ -216,13 +216,11 @@ def main(package_name, output_dir, verbose, debug, output_json, input_list):
                 if scan_list and package_meta:
                     responses = []
                     for plugin in scan_plugins.getAllPlugins():
-                        responses.append(plugin.plugin_object.scan(
-                            scan_list, 
-                            output_dir, 
-                            verbose, 
-                            debug, 
-                            output_json
-                        ))
+                        responses.append(
+                            plugin.plugin_object.scan(
+                                scan_list, output_dir, verbose, debug, output_json
+                            )
+                        )
                     scan_errors += sum(responses)
                     if debug:
                         pprint(responses)
@@ -233,7 +231,6 @@ def main(package_name, output_dir, verbose, debug, output_json, input_list):
             scan_errors += 1
     if verbose and not output_json:
         print(f"Scan complete! {scan_errors} errors.")
-            
 
 
 if __name__ == "__main__":
