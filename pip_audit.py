@@ -15,6 +15,7 @@ import tarfile
 import zipfile
 import traceback
 import logging
+from yapsy.PluginManager import PluginManager
 from pprint import pprint
 
 
@@ -69,7 +70,7 @@ def _extract_archives(
         return (False, package_meta)
     if saved_file_name.endswith(".whl"):
         if verbose and not output_json:
-            print(f"Unzipping downloaded wheel: {saved_file_name}")
+            print(f"--> Unzipping downloaded wheel: {saved_file_name}")
         zip_ref = zipfile.ZipFile(saved_file_name, "r")
         package_meta["total_package_files"] = len(zip_ref.namelist())
         parsed_raw_dir_list = list(
@@ -88,7 +89,7 @@ def _extract_archives(
 
     elif saved_file_name.endswith(".tar.gz"):
         if verbose and not output_json:
-            print(f"Extracting tarball: {saved_file_name}")
+            print(f"--> Extracting tarball: {saved_file_name}")
         tar_ref = tarfile.open(saved_file_name, "r")
         package_meta["total_package_files"] = len(tar_ref.getnames())
         parsed_raw_dir_list = list(
@@ -127,71 +128,73 @@ def _retrieve_directories_to_scan(
     return (scan_list, package_meta)
 
 
-def _bandit_scan(scan_list, output_dir, verbose=False, debug=False, output_json=False):
-    scan_errors = 0
-    for target in scan_list:
-        if output_json:
-            bandit_scan = [
-                "bandit",
-                "-r",
-                "-q",
-                "-f",
-                "json",
-                "-o",
-                f"{output_dir}/bandit_scan_{target}.json",
-                f"{output_dir}/{target}",
-            ]
-        else:
-            bandit_scan = [
-                "bandit",
-                "-r",
-                "-q",
-                "-f",
-                "txt",
-                "-o",
-                f"{output_dir}/bandit_scan_{target}.txt",
-                f"{output_dir}/{target}",
-            ]
-        try:
-            subprocess.run(bandit_scan)
-        except Exception as e:
-            logging.error(traceback.format_exc())
-            scan_errors += 1
+# Moving to plugin based architecture 
+#def _bandit_scan(scan_list, output_dir, verbose=False, debug=False, output_json=False):
+    #scan_errors = 0
+    #for target in scan_list:
+        #if output_json:
+            #bandit_scan = [
+                #"bandit",
+                #"-r",
+                #"-q",
+                #"-f",
+                #"json",
+                #"-o",
+                #f"{output_dir}/bandit_scan_{target}.json",
+                #f"{output_dir}/{target}",
+            #]
+        #else:
+            #bandit_scan = [
+                #"bandit",
+                #"-r",
+                #"-q",
+                #"-f",
+                #"txt",
+                #"-o",
+                #f"{output_dir}/bandit_scan_{target}.txt",
+                #f"{output_dir}/{target}",
+            #]
+        #try:
+            #subprocess.run(bandit_scan)
+        #except Exception as e:
+            #logging.error(traceback.format_exc())
+            #scan_errors += 1
 
-    return scan_errors
+    #return scan_errors
 
 
-def _detect_secrets_scan(
-    scan_list, output_dir, verbose=False, debug=False, output_json=False
-):
-    scan_errors = 0
-    for target in scan_list:
-        detect_secrets_scan = [
-            "detect-secrets",
-            "scan",
-            "--all-files",
-            f"{output_dir}/{target}",
-        ]
-        try:
-            detect_secrets_output = subprocess.run(
-                detect_secrets_scan, capture_output=True
-            )
-        except Exception as e:
-            logging.error(traceback.format_exc())
-            scan_errors += 1
+# Moving to plugin based architecture
+#def _detect_secrets_scan(
+    #scan_list, output_dir, verbose=False, debug=False, output_json=False
+#):
+    #scan_errors = 0
+    #for target in scan_list:
+        #detect_secrets_scan = [
+            #"detect-secrets",
+            #"scan",
+            #"--all-files",
+            #f"{output_dir}/{target}",
+        #]
+        #try:
+            #detect_secrets_output = subprocess.run(
+                #detect_secrets_scan, capture_output=True
+            #)
+        #except Exception as e:
+            #logging.error(traceback.format_exc())
+            #scan_errors += 1
 
-        if debug:
-            print("Trying to write to:")
-            pprint(f"{output_dir}/detect_secrets_{target}.json")
-        try:
-            file = open(f"{output_dir}/detect_secrets_{target}.json", "w")
-            file.write(detect_secrets_output.stdout.decode("utf-8"))
-            file.close()
-        except Exception as e:
-            logging.error(traceback.format_exc())
-            scan_errors += 1
+        #if debug:
+            #print("Trying to write to:")
+            #pprint(f"{output_dir}/detect_secrets_{target}.json")
+        #try:
+            #file = open(f"{output_dir}/detect_secrets_{target}.json", "w")
+            #file.write(detect_secrets_output.stdout.decode("utf-8"))
+            #file.close()
+        #except Exception as e:
+            #logging.error(traceback.format_exc())
+            #scan_errors += 1
 
-    return scan_errors
+    #return scan_errors
 
 
 @click.command()
@@ -229,11 +232,11 @@ def main(package_name, output_dir, verbose, debug, output_json, input_list):
     # targets = _pull_from_queue()
 
     # Fire!
+    scan_errors = 0
     for raw_input in targets:
         scan_list = []
         package_meta = {}
-        scan_errors = 0
-
+        
         if verbose and not output_json:
             print(f"-> Using pip to download {raw_input}")
         if debug:
@@ -275,32 +278,53 @@ def main(package_name, output_dir, verbose, debug, output_json, input_list):
 
                 if scan_list and package_meta:
                     if verbose and not output_json:
-                        print(
-                            f"--> Running bandit against files {', '.join(scan_list)}. Output saved to {output_dir}."
-                        )
+                        print("--> Loading scan plugins")
+                    scan_plugins = PluginManager()
+                    scan_plugins.setPluginPlaces(["plugins"])
+                    scan_plugins.collectPlugins()
+                    
+                    responses = []
+                    for plugin in scan_plugins.getAllPlugins():
+                        responses.append(plugin.plugin_object.scan(
+                            scan_list, 
+                            output_dir, 
+                            verbose, 
+                            debug, 
+                            output_json
+                        ))
+                    scan_errors += sum(responses)
                     if debug:
-                        pprint(scan_list)
-                    bandit_scan_results = _bandit_scan(
-                        scan_list=scan_list,
-                        output_dir=output_dir,
-                        output_json=output_json,
-                    )
+                        pprint(responses)
+                    #if verbose and not output_json:
+                        #print(
+                            #f"--> Running bandit against files {', '.join(scan_list)}. Output saved to {output_dir}."
+                        #)
+                    #if debug:
+                        #pprint(scan_list)
+                    #bandit_scan_results = _bandit_scan(
+                        #scan_list=scan_list,
+                        #output_dir=output_dir,
+                        #output_json=output_json,
+                    #)
 
-                    if verbose and not output_json:
-                        print(
-                            f"--> Running detect-secrets against package dirs {', '.join(scan_list)}.  Output saved to {output_dir}."
-                        )
-                    if debug:
-                        pprint(scan_list)
-                    detect_secrets_scan_results = _detect_secrets_scan(
-                        scan_list=scan_list,
-                        output_dir=output_dir,
-                        output_json=output_json,
-                    )
+                    #if verbose and not output_json:
+                        #print(
+                            #f"--> Running detect-secrets against package dirs {', '.join(scan_list)}.  Output saved to {output_dir}."
+                        #)
+                    #if debug:
+                        #pprint(scan_list)
+                    #detect_secrets_scan_results = _detect_secrets_scan(
+                        #scan_list=scan_list,
+                        #output_dir=output_dir,
+                        #output_json=output_json,
+                    #)
         else:
             if verbose and not output_json:
                 print(f"! Pip download failed for {raw_input}")
             scan_errors += 1
+    if verbose and not output_json:
+        print(f"Scan complete! {scan_errors} errors.")
+            
 
 
 if __name__ == "__main__":
