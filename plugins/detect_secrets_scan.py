@@ -1,6 +1,7 @@
 import subprocess
 import logging
 import traceback
+from pprint import pprint
 from yapsy.IPlugin import IPlugin
 
 

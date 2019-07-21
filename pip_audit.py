@@ -7,6 +7,7 @@
 
 import os
 import sys
+import shutil
 import subprocess
 import string
 import click
@@ -64,17 +65,20 @@ def _extract_archives(
 ):
     stdout = output.stdout.decode("utf-8")
     if "Saved " in stdout:
-        saved_file_name = stdout.split("Saved ")[1].split("\n")[0].replace("./", "")
+        package_meta["saved_file_name"] = (
+            stdout.split("Saved ")[1].split("\n")[0].replace("./", "")
+        )
     else:
         print("File already downloaded or pip transaction failed!")
         return (False, package_meta)
-    if saved_file_name.endswith(".whl"):
+    if package_meta["saved_file_name"].endswith(".whl"):
         if verbose and not output_json:
-            print(f"-> Unzipping downloaded wheel: {saved_file_name}")
-        zip_ref = zipfile.ZipFile(saved_file_name, "r")
-        package_meta["total_package_files"] = len(zip_ref.namelist())
+            print(f"-> Unzipping downloaded wheel: {package_meta['saved_file_name']}")
+        zip_ref = zipfile.ZipFile(package_meta["saved_file_name"], "r")
+        package_meta["archive_file_list"] = zip_ref.namelist()
+        package_meta["total_package_files"] = len(package_meta["archive_file_list"])
         parsed_raw_dir_list = list(
-            file for file in zip_ref.namelist() if file.endswith(".py")
+            file for file in package_meta["archive_file_list"] if file.endswith(".py")
         )
 
         try:
@@ -87,13 +91,15 @@ def _extract_archives(
         zip_ref.close()
         return (parsed_raw_dir_list, package_meta)
 
-    elif saved_file_name.endswith(".tar.gz"):
+    elif package_meta["saved_file_name"].endswith(".tar.gz"):
         if verbose and not output_json:
-            print(f"-> Extracting tarball: {saved_file_name}")
-        tar_ref = tarfile.open(saved_file_name, "r")
-        package_meta["total_package_files"] = len(tar_ref.getnames())
+            print(f"-> Extracting tarball: {package_meta['saved_file_name']}")
+        tar_ref = tarfile.open(package_meta["saved_file_name"], "r")
+        package_meta["archive_file_list"] = tar_ref.getnames()
+        package_meta["total_package_files"] = len(package_meta["archive_file_list"])
+
         parsed_raw_dir_list = list(
-            file for file in tar_ref.getnames() if file.endswith(".py")
+            file for file in package_meta["archive_file_list"] if file.endswith(".py")
         )
 
         try:
@@ -109,7 +115,7 @@ def _extract_archives(
     else:
         if verbose and not output_json:
             print(
-                f"{saved_file_name} found. Not a wheel or tarball, can't handle anything else yet."
+                f"{package_meta['saved_file_name']} found. Not a wheel or tarball, can't handle anything else yet."
             )
         return False
 
@@ -126,6 +132,42 @@ def _retrieve_directories_to_scan(
         return False
 
     return (scan_list, package_meta)
+
+
+def _clean_up_downloads(
+    package_meta, output_dir, verbose=False, debug=False, output_json=False
+):
+    # Empty the files first
+    for file in package_meta["archive_file_list"]:
+        file_target = os.path.join(output_dir, file)
+        if debug:
+            print(f"Trying to delete: {file_target}")
+        if os.path.isfile(file_target):
+            try:
+                os.remove(file_target)
+            except Exception as e:
+                logging.error(traceback.format_exc())
+
+    # Remove the directories
+    dirs = set(dirs.split("/")[0] for dirs in package_meta["archive_file_list"])
+    for dir in dirs:
+        directory = os.path.join(output_dir, dir)
+        if os.path.isdir(directory):
+            if debug:
+                print(f"Trying to delete dir: {directory}")
+            try:
+                shutil.rmtree(directory)
+            except Exception as e:
+                logging.error(traceback.format_exc())
+
+    # delete archive
+    if debug:
+        print(f"Trying to delete: {package_meta['saved_file_name']}")
+    if os.path.isfile(package_meta["saved_file_name"]):
+        try:
+            os.remove(package_meta["saved_file_name"])
+        except Exception as e:
+            logging.error(traceback.format_exc())
 
 
 @click.command()
@@ -152,7 +194,14 @@ def _retrieve_directories_to_scan(
     "input_list",
     help="Input list file, in json format, of packages to scan.",
 )
-def main(package_name, output_dir, verbose, debug, output_json, input_list):
+@click.option(
+    "-s",
+    "--save_files",
+    "save_files",
+    help="CAUTION! Don't clean up the pip downloads and extracted archive files.  Careful, the whole PyPI archive has over 2 million files",
+    is_flag=True,
+)
+def main(package_name, output_dir, verbose, debug, output_json, input_list, save_files):
     # Normalize targeting options
     targets = []
     if package_name:
@@ -225,6 +274,16 @@ def main(package_name, output_dir, verbose, debug, output_json, input_list):
                     if debug:
                         pprint(responses)
                     # @TODO add package cleanup routine
+                    # package_meta["saved_file_name"]
+                    if not save_files and package_meta:
+                        if verbose and not output_json:
+                            print("-> Cleaning up downloaded files")
+                        if debug:
+                            pprint(package_meta)
+                        _clean_up_downloads(
+                            package_meta, output_dir, verbose, debug, output_json
+                        )
+
         else:
             if verbose and not output_json:
                 print(f"! Pip download failed for {raw_input}")

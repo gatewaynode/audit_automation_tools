@@ -20,6 +20,7 @@ def virtualenv():
 @task
 def clean():
     run("rm -rvf local_files/*")
+    run("rm -rvf __pycache__")
     run("rm -rvf plugins/__pycache__")
 
 
