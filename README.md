@@ -1,6 +1,6 @@
 Audit Tools
 ===========
-Some simple tooling to help automate a security audit for pip and PyPI.  Right now this just contains a wrapper called pip_audit.py that uses pip to download a non-binary version of a package, crack open the wheel and run Bandit and Detect Secrets against it.  The resulting reports (along with the source and wheel) are stored in a local_files directory inside this codebase.  By default there is no stdout, this is meant to be run in an automation orchestation.  but if you are just trying it out on the CLI the verbose flag, `-v`, must be supplies to see what it is doing.
+Some simple tooling to help automate a security audit for pip and PyPI.  Right now this just contains a wrapper called pip_audit.py that uses pip to download a non-binary version of a package, crack open the archive and run the plugins against it.  The resulting reports (along with the source and wheel) are stored in a local_files directory inside this codebase.  By default there is no stdout, this is meant to be run in an automation orchestation.  But if you are just trying it out on the CLI the verbose flag, `-v`, must be supplies to see what it is doing.
 
 The scanners, currently just Bandit and Detect Secrets, are run as plugins(YAPSY) in the plugin directory.  More are planned.
 
@@ -8,7 +8,7 @@ The scanners, currently just Bandit and Detect Secrets, are run as plugins(YAPSY
 
 The task runner is Python Invoke instead of the Makefile I usually provide.
 
-The code formatter is Black.
+The code formatter is Black (if contributing run this before requesting a pull).
 
 Testing framework is PyTest.
 
@@ -18,6 +18,18 @@ Built and "tested" on Linux, KDE Neon latest stable.
 
 Usage
 -----
+
+Usage: pip_audit.py [OPTIONS]
+
+Options:
+  -p, --package TEXT  The PyPI package to audit
+  -o, --output TEXT   The directory to unarchive into.
+  -v, --verbose       Show more information.
+  -d, --debug         Internal data information.
+  -j, --json          Run scanners with JSON output.  Disables verbose.
+  -i, --input TEXT    Input list file, in json format, of packages to scan.
+  -s, --save_files    CAUTION! Don't clean up the pip downloads and extracted archive files.  Careful, the whole PyPI archive has over 2 million files
+  --help              Show this message and exit.
 
 Audit a single package:
 ```bash
@@ -66,3 +78,4 @@ Roadmap
 * PyLint plugin
 * ElasticSearch results storage mode
 * CLI integration
+* Plugin execution control
