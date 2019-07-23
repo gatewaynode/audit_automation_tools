@@ -18,7 +18,7 @@ Built and "tested" on Linux, KDE Neon latest stable.
 
 Usage
 -----
-
+```
 Usage: pip_audit.py [OPTIONS]
 
 Options:
@@ -30,6 +30,7 @@ Options:
   -i, --input TEXT    Input list file, in json format, of packages to scan.
   -s, --save_files    CAUTION! Don't clean up the pip downloads and extracted archive files.  Careful, the whole PyPI archive has over 2 million files
   --help              Show this message and exit.
+```
 
 Audit a single package:
 ```bash
