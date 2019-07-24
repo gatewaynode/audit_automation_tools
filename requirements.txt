@@ -11,6 +11,7 @@ gitdb2==2.0.5
 GitPython==2.1.11
 idna==2.8
 importlib-metadata==0.18
+jellyfish==0.7.2
 more-itertools==7.1.0
 packaging==19.0
 pbr==5.4.0
