@@ -64,10 +64,11 @@ class Typo_Squatting_Protection(IPlugin):
             logging.error(traceback.format_exc())
             scan_errors += 1
 
-        with open(
-            f"{output_dir}/typo_squatting_results.txt", "w", encoding="utf-8"
-        ) as scan_results:
-            for pkg_name in scan_list:
+
+        for pkg_name in scan_list:
+            with open(
+                f"{output_dir}/typo_squatting_{pkg_name}.txt", "w", encoding="utf-8"
+            ) as scan_results:
                 if verbose and not output_json:
                     print(
                         f"-> Running typo-squatting detection against package {pkg_name}. Output saved to {output_dir}."
