@@ -216,6 +216,7 @@ def main(package_name, output_dir, verbose, debug, output_json, input_list, save
     scan_plugins = PluginManager()
     scan_plugins.setPluginPlaces(["plugins"])
     scan_plugins.collectPlugins()
+    all_plugins = scan_plugins.getAllPlugins()
 
     # Fire!
     scan_errors = 0
@@ -264,7 +265,7 @@ def main(package_name, output_dir, verbose, debug, output_json, input_list, save
 
                 if scan_list and package_meta:
                     responses = []
-                    for plugin in scan_plugins.getAllPlugins():
+                    for plugin in all_plugins:
                         responses.append(
                             plugin.plugin_object.scan(
                                 scan_list, output_dir, verbose, debug, output_json
