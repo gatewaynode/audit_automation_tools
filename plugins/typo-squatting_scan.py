@@ -64,7 +64,6 @@ class Typo_Squatting_Protection(IPlugin):
             logging.error(traceback.format_exc())
             scan_errors += 1
 
-
         for pkg_name in scan_list:
             with open(
                 f"{output_dir}/typo_squatting_{pkg_name}.txt", "w", encoding="utf-8"
