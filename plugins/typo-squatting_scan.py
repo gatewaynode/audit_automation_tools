@@ -15,7 +15,7 @@ plugin_location = os.path.dirname(
 
 class Typo_Squatting_Protection(IPlugin):
     def scan(
-        self, scan_list=[], output_dir="", verbose=False, debug=False, output_json=False
+        self, scan_list=[], package_meta=[], output_dir="", verbose=False, debug=False, output_json=False
     ):
         # Defining some smaller functions to help with the execution.
 

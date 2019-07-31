@@ -268,7 +268,7 @@ def main(package_name, output_dir, verbose, debug, output_json, input_list, save
                     for plugin in all_plugins:
                         responses.append(
                             plugin.plugin_object.scan(
-                                scan_list, output_dir, verbose, debug, output_json
+                                scan_list, output_dir, package_meta, verbose, debug, output_json
                             )
                         )
                     scan_errors += sum(responses)

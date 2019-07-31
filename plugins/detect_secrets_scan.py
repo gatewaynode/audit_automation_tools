@@ -7,7 +7,7 @@ from yapsy.IPlugin import IPlugin
 
 class Detect_Secrets_Scanner(IPlugin):
     def scan(
-        self, scan_list=[], output_dir="", verbose=False, debug=False, output_json=False
+        self, scan_list=[], package_meta=[], output_dir="", verbose=False, debug=False, output_json=False
     ):
         scan_errors = 0
         if scan_list:
