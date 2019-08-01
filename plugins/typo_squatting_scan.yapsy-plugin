@@ -1,6 +1,6 @@
 [Core]
 Name = Typo-squatting Scan
-Module = typo-squatting_scan
+Module = typo_squatting_scan
 
 [Documentation]
 Author = u/roadelou
