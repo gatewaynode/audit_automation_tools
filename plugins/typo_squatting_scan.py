@@ -282,7 +282,6 @@ class Typo_Squatting_Protection(IPlugin):
 
         ############# Once that point has been reached the script should have found a pkg_name to work with.
 
-        print(pkg_names_list)
         for pkg_name in pkg_names_list:
 
             if verbose and not output_json:
