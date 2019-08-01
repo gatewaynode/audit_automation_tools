@@ -10,7 +10,7 @@ import re
 from yapsy.IPlugin import IPlugin
 
 plugin_location = os.path.dirname(
-    sys.argv[0]
+    os.path.abspath(sys.argv[0])
 )  # The location of the directory where the plugin is located.
 
 
@@ -235,50 +235,54 @@ class Typo_Squatting_Protection(IPlugin):
                                     .strip('"')
                                 )  # remove the quotes in the original python code.
 
-                    if (
-                        not pkg_name in pkg_names_list
-                    ):  # i.e. if we haven't already registered the name (which should never happend, but is added with the scan in metadata)
-                        pkg_names_list.append(
-                            pkg_name
-                        )  # all packages appear at least once in the scan_list, so we are certain that each package will at least appear once in this list.
+                # There should be a pkg_name defined here whether we found a setup.py file or not.
+                if (
+                    not pkg_name in pkg_names_list
+                ):  # i.e. if we haven't already registered the name (which should never happend, but is added with the scan in metadata)
+                    pkg_names_list.append(
+                        pkg_name
+                    )  # all packages appear at least once in the scan_list, so we are certain that each package will at least appear once in this list.
 
             ### Here we do basically the same work once more with the informations obtained from METADATA files.
-            all_metadata_paths = []
 
-            archive_file_list = package_meta["archive_file_list"]
-            for filepath in archive_file_list:
-                if filepath.endswith("METADATA") or filepath.endswith(
-                    "PKG-INFO"
-                ):  # Both files contain the package name
-                    all_metadata_paths.append(filepath)
+            if "archive_file_list" in package_meta:
+                all_metadata_paths = []
 
-            for metadata_path in all_metadata_paths:
-                with open(f"{output_dir}/{metadata_path}", "r") as metadata_file:
-                    metadata_line = metadata_file.readline().rstrip()
-                    metadata_name_found = (
-                        False
-                    )  # indicates whether the name of the package was found in metadata. If not, it seems suspicious.
-                    while metadata_line:
-                        if metadata_line.startswith("Name: "):
+                archive_file_list = package_meta["archive_file_list"]
+                for filepath in archive_file_list:
+                    if filepath.endswith("METADATA") or filepath.endswith(
+                        "PKG-INFO"
+                    ):  # Both files contain the package name
+                        all_metadata_paths.append(filepath)
 
-                            pkg_name = metadata_line[
-                                6:
-                            ]  # the rest of the line is considered to be the package name.
-                            if not pkg_name in pkg_names_list:
-                                pkg_names_list.append(pkg_name)
-
-                            metadata_name_found = True
-                            break  # just for efficiency
+                for metadata_path in all_metadata_paths:
+                    with open(f"{output_dir}/{metadata_path}", "r") as metadata_file:
                         metadata_line = metadata_file.readline().rstrip()
+                        metadata_name_found = (
+                            False
+                        )  # indicates whether the name of the package was found in metadata. If not, it seems suspicious.
+                        while metadata_line:
+                            if metadata_line.startswith("Name: "):
 
-                    if not metadata_name_found:
-                        warning_file.write(
-                            f"The METADATA file at {metadata_path} doesn't seem to contain the name of the package, which is suspicious and may lead to parsing mistakes from this script."
-                        )
-                        scan_errors += 1
+                                pkg_name = metadata_line[
+                                    6:
+                                ]  # the rest of the line is considered to be the package name.
+                                if not pkg_name in pkg_names_list:
+                                    pkg_names_list.append(pkg_name)
+
+                                metadata_name_found = True
+                                break  # just for efficiency
+                            metadata_line = metadata_file.readline().rstrip()
+
+                        if not metadata_name_found:
+                            warning_file.write(
+                                f"The METADATA file at {metadata_path} doesn't seem to contain the name of the package, which is suspicious and may lead to parsing mistakes from this script."
+                            )
+                            scan_errors += 1
 
         ############# Once that point has been reached the script should have found a pkg_name to work with.
 
+        print(pkg_names_list)
         for pkg_name in pkg_names_list:
 
             if verbose and not output_json:
