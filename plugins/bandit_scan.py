@@ -13,6 +13,7 @@ class Bsndit_Scanner(IPlugin):
         verbose=False,
         debug=False,
         output_json=False,
+        **kwargs
     ):
         scan_errors = 0
         if scan_list:
