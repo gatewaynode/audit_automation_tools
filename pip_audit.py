@@ -170,6 +170,15 @@ def _clean_up_downloads(
             logging.error(traceback.format_exc())
 
 
+class Node:
+    def __init__(self, node_name, node_children):
+        self.name = node_name
+        self.children = node_children
+
+    def __repr__(self):
+        return f"'{self.name}', {[child.name for child in self.children]}"
+
+
 @click.command()
 @click.option("-p", "--package", "package_name", help="The PyPI package to audit")
 @click.option(

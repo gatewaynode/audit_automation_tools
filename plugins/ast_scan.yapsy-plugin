@@ -1,0 +1,9 @@
+[Core]
+Name = AST Scan
+Module = ast_scan
+
+[Documentation]
+Author = u/roadelou
+Version = 0.1
+Website = https://github.com/gatewaynode/audit_automation_tools
+Description = Runs the ast_scan security plugins.
