@@ -23,6 +23,7 @@ class Typo_Squatting_Protection(IPlugin):
         verbose=False,
         debug=False,
         output_json=False,
+        **kwargs
     ):
         # Defining some smaller functions to help with the execution.
 
