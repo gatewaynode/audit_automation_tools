@@ -29,7 +29,7 @@ class Typo_Squatting_Protection(IPlugin):
 
         def _downloading_top_5000():
             inventory_raw = requests.get(
-                "https://hugovk.github.io/top-pypi-packages/top-pypi-packages-365-days.json"
+                "https://hugovk.github.io/top-pypi-packages/top-pypi-packages-30-days.json"
             )
             with open(
                 f"{plugin_location}/top5000_list.json", "w", encoding="utf-8"
